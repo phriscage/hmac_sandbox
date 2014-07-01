@@ -49,7 +49,12 @@ def create():
         message = "must be application json"
         logger.warn(message)
         return jsonify(message=message, success=False), 400
-    user = User(**request.json)
+    try:
+        user = User(**request.json)
+    except ValueError as error:
+        message = str(error)
+        logger.warn(message)
+        return jsonify(error=400, message=message, success=False), 400
     user.set_values()
     try:
         data = db_client.add(user.key, user.values)
@@ -57,7 +62,10 @@ def create():
         message = "'%s' already exists." % user.key
         logger.warn(message)
         return jsonify(error=409, message=message, success=False), 409
-    print data.success
+    if not data.success:
+        message = "Something broke... We are looking into it!"
+        logger.critical(message)
+        return jsonify(error=500, message=message, success=False), 500
     message = "'%s' added successfully!" % user.key
     logger.debug(message)
     return jsonify(message=message, success=True), 200

@@ -4,8 +4,11 @@
 from __future__ import absolute_import
 import uuid
 import time
+import re
 import logging
 from werkzeug import generate_password_hash, check_password_hash
+
+EMAIL_REGEX = re.compile(r'[^@]+@[^@]+\.[^@]+')
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +33,8 @@ class User(object):
         if self.key_name not in self.kwargs:
             message = "'%s' is missing." % self.key_name
             raise ValueError(message)
-        elif not self.kwargs[self.key_name]:
-            message = "'%s' cannot be blank." % self.key_name
+        elif not EMAIL_REGEX.match(self.kwargs[self.key_name]):
+            message = "'%s' is not valid." % self.kwargs[self.key_name]
             raise ValueError(message)
         if self.kwargs.get('password'):
             self.set_password(self.kwargs['password'])
