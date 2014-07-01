@@ -50,6 +50,7 @@ def create():
         logger.warn(message)
         return jsonify(message=message, success=False), 400
     user = User(**request.json)
+    user.set_values()
     try:
         data = db_client.add(user.key, user.values)
     except KeyExistsError as error:
@@ -93,5 +94,8 @@ def get(email_address):
         return jsonify(error=404, message=message, success=False), 404
     message = "'%s' successfully found!" % email_address
     logger.debug(message)
+    ## don't display the client and group data yet
+    for attr in ['clients', 'groups']:
+        data.value.pop(attr, None)
     return jsonify(message=message, data=data.value, success=True), 200
 
