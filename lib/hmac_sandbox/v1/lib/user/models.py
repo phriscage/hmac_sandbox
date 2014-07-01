@@ -34,7 +34,6 @@ class User(object):
         self.set_key(self.meta, self.kwargs[self.key_name])
         if 'password' in self.kwargs:
             self.set_password(self.kwargs['password'])
-        self.set_api_key()
         for valid_arg in [self.key_name]:
             if valid_arg in self.kwargs:
                 self.values[valid_arg] = self.kwargs[valid_arg]
