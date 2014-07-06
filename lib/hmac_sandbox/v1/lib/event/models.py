@@ -1,5 +1,5 @@
 """
-    message.models.py
+    event.models.py
 """
 from __future__ import absolute_import
 import os
@@ -14,8 +14,8 @@ REQUIRED_ARGS = ['db_client', 'user_id', 'client_id']
 
 logger = logging.getLogger(__name__)
 
-class Message(object):
-    """ encapsulate the OpenXC Message as an object """
+class Event(object):
+    """ encapsulate the OpenXC Event as an object """
     
     def __init__(self, **kwargs):
         """ instantiate the class """
@@ -23,7 +23,7 @@ class Message(object):
         self.values = {}
         self.db_client = None
         self._validate_args(**kwargs)
-        self.set_key(self.__class__.__name__.lower(), str(uuid.uuid4))
+        self.set_key(self.__class__.__name__.lower(), str(uuid.uuid4()))
         self.current_time = time.time()
 
     def _validate_args(self, **kwargs):
@@ -50,22 +50,38 @@ class Message(object):
         logger.info("'%s' created." % self.key)
 
     def set_values(self, data):
-        """ set the values for a specific message_name """
+        """ set the values for a specific event_name """
         logger.info("Starting...")
         if not isinstance(data, dict):
             message = "Not a dictionary: %s" % type(data)
+            logger.warn(message)
+            raise ValueError(message)
+        if data.get('data') is None:
+            message = "data attribute must exist: %s" % data
+            logger.warn(message)
+            raise ValueError(message)
+        if len(data['data']) > 5:
+            message = "Maximum values is: %s" % len(data['data'])
             logger.warn(message)
             raise ValueError(message)
         self._set_values(data)
         logger.info("Finished")
         return True
 
+    def add(self):
+        """ add the couchbase document and/or children """
+        try:
+            data = self.db_client.add(self.key, self.values)
+        except KeyExistsError as error:
+            logger.warn(error)
+            raise
+        return data
 
 if __name__ == '__main__':
-    message = Message(db_client='abc', user_id='user::abc@abc.com', 
+    event = Event(db_client='abc', user_id='user::abc@abc.com', 
         client_id='client::b68edfa5-fe9e-47b5-9b56-355fb12d5bac')
-    message.set_values({
+    event.set_values({
         "name":"odometer",
         "value":43572.738281,
         "timestamp":1362060000.036000})
-    print message.values
+    print event.values
