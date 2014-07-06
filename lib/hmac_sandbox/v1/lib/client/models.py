@@ -18,13 +18,13 @@ class Client(object):
     def __init__(self, **kwargs):
         """ instantiate the class """
         self.kwargs = kwargs
-        self.meta = self.__class__.__name__.lower()
         self.key = None
         self.values = {}
         self.required_args = ['db_client', 'user_id']
         self._validate_args()
         self.api_key = str(uuid.uuid4())
-        self.set_key(self.meta, self.api_key)
+        self.set_key(self.__class__.__name__.lower(), self.api_key)
+        self.db_client = self.kwargs['db_client']
         self.current_time = time.time()
 
     def _validate_args(self):
@@ -51,7 +51,7 @@ class Client(object):
         self.key = '%s::%s' % (attr, value)
         logger.info("'%s' created." % self.key)
 
-    def set_api_key(self, client_name):
+    def set_values(self, client_name):
         """ set the api key and secret for a specific client_name """
         logger.info("Starting...")
         self._set_api_key(client_name)
@@ -61,5 +61,5 @@ class Client(object):
 
 if __name__ == '__main__':
     client = Client(db_client='abc', user_id='user::abc@abc.com', a=1)
-    client.set_api_key('default')
+    client.set_values('default')
     print client.values

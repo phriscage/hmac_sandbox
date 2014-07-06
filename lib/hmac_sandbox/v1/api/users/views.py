@@ -57,7 +57,7 @@ def create():
         return jsonify(error=400, message=message, success=False), 400
     user.set_values()
     try:
-        data = db_client.add(user.key, user.values)
+        data = user.add()
     except KeyExistsError as error:
         message = "'%s' already exists." % user.key
         logger.warn(message)

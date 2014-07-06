@@ -10,6 +10,7 @@ import time
 import re
 import logging
 from werkzeug import generate_password_hash, check_password_hash
+from couchbase.exceptions import KeyExistsError
 
 from hmac_sandbox.v1.lib.client.models import Client
 
@@ -23,13 +24,15 @@ class User(object):
     def __init__(self, **kwargs):
         """ instantiate the class """
         self.kwargs = kwargs
-        self.meta = self.__class__.__name__.lower()
         self.key = None
         self.values = {}
+        self.children = {}
         self.key_name = 'email_address'
         self.required_args = [self.key_name, 'db_client']
         self._validate_args()
-        self.set_key(self.meta, self.kwargs[self.key_name])
+        self.set_key(self.__class__.__name__.lower(), 
+            self.kwargs[self.key_name])
+        self.db_client = self.kwargs['db_client']
         self.current_time = time.time()
 
     def _validate_args(self):
@@ -46,25 +49,14 @@ class User(object):
                 % (self.kwargs[self.key_name], self.key_name))
             raise ValueError(message)
         
-    def set_values(self, values=None):
-        """ set the model attributes and default values """
-        logger.debug("Setting attributes...")
-        if not values:
-            if self.kwargs.get('password'):
-                self.set_password(self.kwargs['password'])
-            self.set_group('user')
-            self.set_client_api_key('default')
-            self.values['created_at'] = self.current_time
-            self.values['email_address'] = self.kwargs[self.key_name]
-        else:
-            self.values = values
-        
     def _set_client_api_key(self, client_name, idx=None):
         """ set the client api key and secret """
         if idx is None:
             idx = 0
-        client = Client(db_client=self.kwargs['db_client'], user_id=self.key)
-        client.set_api_key('default')
+        client = Client(db_client=self.kwargs['db_client'], 
+            user_id=self.key)
+        client.set_values('default')
+        self.children[client.key] = client.values ## saved once object is saved
         if len(self.values['clients']) > 0:
             self.values['clients'].pop(idx)
         self.values['clients'].insert(idx, {
@@ -90,6 +82,19 @@ class User(object):
         self.key = '%s::%s' % (attr, value)
         logger.info("'%s' created." % self.key)
 
+    def set_values(self, values=None):
+        """ set the model attributes and default values """
+        logger.debug("Setting attributes...")
+        if not values:
+            if self.kwargs.get('password'):
+                self.set_password(self.kwargs['password'])
+            self.set_group('user')
+            self.set_client_api_key('default')
+            self.values['created_at'] = self.current_time
+            self.values['email_address'] = self.kwargs[self.key_name]
+        else:
+            self.values = values
+        
     def set_password(self, password):
         """ set the password using werkzeug generate_password_hash """
         self.values['password'] = generate_password_hash(password)
@@ -135,6 +140,20 @@ class User(object):
         logger.info("Finished")
         return True
 
+    def add(self):
+        """ add the couchbase document and/or children """
+        try:
+            data = self.db_client.add(self.key, self.values)
+            logger.debug("Setting new document(s) for '%s'" % self.children)
+            try:
+                children_data = self.db_client.set_multi(self.children)
+            except Exception as error:
+                logger.exception(error)
+                raise
+        except KeyExistsError as error:
+            logger.warn(error)
+            raise
+        return data
 
 if __name__ == '__main__':
     import json
