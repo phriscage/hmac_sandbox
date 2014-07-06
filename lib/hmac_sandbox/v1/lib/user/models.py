@@ -15,6 +15,8 @@ from couchbase.exceptions import KeyExistsError
 from hmac_sandbox.v1.lib.client.models import Client
 
 EMAIL_REGEX = re.compile(r'[^@]+@[^@]+\.[^@]+')
+REQUIRED_ARGS = ['db_client', 'email_address']
+KEY_NAME = 'email_address'
 
 logger = logging.getLogger(__name__)
 
@@ -23,38 +25,37 @@ class User(object):
     
     def __init__(self, **kwargs):
         """ instantiate the class """
-        self.kwargs = kwargs
         self.key = None
         self.values = {}
         self.children = {}
-        self.key_name = 'email_address'
-        self.required_args = [self.key_name, 'db_client']
-        self._validate_args()
-        self.set_key(self.__class__.__name__.lower(), 
-            self.kwargs[self.key_name])
-        self.db_client = self.kwargs['db_client']
+        self.db_client = None
+        self._validate_args(**kwargs)
+        self.set_key(self.__class__.__name__.lower(), kwargs[KEY_NAME])
         self.current_time = time.time()
 
-    def _validate_args(self):
+    def _validate_args(self, **kwargs):
         """ validate the model args """
         logger.debug("Validating args...")
-        for req_arg in self.required_args:
-            if self.kwargs.get(req_arg) is None:
+        for req_arg in REQUIRED_ARGS:
+            if kwargs.get(req_arg) is None:
                 message = "'%s' is missing." % req_arg
                 logger.warn(message)
                 raise ValueError(message)
-            #self.values[req_arg] = self.kwargs[req_arg]
-        if not EMAIL_REGEX.match(self.kwargs[self.key_name]):
-            message = ("'%s' is not valid '%s'." 
-                % (self.kwargs[self.key_name], self.key_name))
+            if req_arg in ['db_client']:
+                setattr(self, req_arg, kwargs.get(req_arg))
+            else:
+                self.values[req_arg] = kwargs.get(req_arg)
+        if not EMAIL_REGEX.match(kwargs[KEY_NAME]):
+            message = ("'%s' is not valid '%s'." % (kwargs[KEY_NAME], KEY_NAME))
             raise ValueError(message)
-        
+        if kwargs.get('password'):
+            self.set_password(str(kwargs['password']))
+
     def _set_client_api_key(self, client_name, idx=None):
         """ set the client api key and secret """
         if idx is None:
             idx = 0
-        client = Client(db_client=self.kwargs['db_client'], 
-            user_id=self.key)
+        client = Client(db_client=self.db_client, user_id=self.key)
         client.set_values('default')
         self.children[client.key] = client.values ## saved once object is saved
         if len(self.values['clients']) > 0:
@@ -86,12 +87,9 @@ class User(object):
         """ set the model attributes and default values """
         logger.debug("Setting attributes...")
         if not values:
-            if self.kwargs.get('password'):
-                self.set_password(self.kwargs['password'])
+            self.values['created_at'] = self.current_time
             self.set_group('user')
             self.set_client_api_key('default')
-            self.values['created_at'] = self.current_time
-            self.values['email_address'] = self.kwargs[self.key_name]
         else:
             self.values = values
         
@@ -157,7 +155,13 @@ class User(object):
 
 if __name__ == '__main__':
     import json
-    user = User(email_address='abc@abc.com', db_client='abc', a=1, password='123')
+    args = { 
+        'email_address': 'abc@abc.com',
+        'db_client': 'abc', 
+        'extra': 1,
+        'password': '123abc'
+    }
+    user = User(**args)
     user.set_values()
     print json.dumps(user.values, indent=4)
     #user.set_client_api_key('default', True)

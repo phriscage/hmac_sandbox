@@ -1,5 +1,5 @@
 """
-    client.models.py
+    message.models.py
 """
 from __future__ import absolute_import
 import os
@@ -10,12 +10,12 @@ import uuid
 import time
 import logging
 
-REQUIRED_ARGS = ['db_client', 'user_id']
+REQUIRED_ARGS = ['db_client', 'user_id', 'client_id']
 
 logger = logging.getLogger(__name__)
 
-class Client(object):
-    """ encapsulate the client as an object """
+class Message(object):
+    """ encapsulate the OpenXC Message as an object """
     
     def __init__(self, **kwargs):
         """ instantiate the class """
@@ -23,8 +23,7 @@ class Client(object):
         self.values = {}
         self.db_client = None
         self._validate_args(**kwargs)
-        self.api_key = str(uuid.uuid4())
-        self.set_key(self.__class__.__name__.lower(), self.api_key)
+        self.set_key(self.__class__.__name__.lower(), str(uuid.uuid4))
         self.current_time = time.time()
 
     def _validate_args(self, **kwargs):
@@ -40,30 +39,33 @@ class Client(object):
             else:
                 self.values[req_arg] = kwargs.get(req_arg)
 
-    def _set_api_key(self, client_name):
-        """ set the api key and secret """
-        self.values.update({
-            'name': client_name,
-            'api_key': self.api_key,
-            'api_secret': str(uuid.uuid4()),
-            'created_at': self.current_time,
-        })
+    def _set_values(self, data):
+        """ set the values """
+        self.values['created_at'] = self.current_time
+        self.values.update(data)
 
     def set_key(self, attr, value):
         """ set the key value """
         self.key = '%s::%s' % (attr, value)
         logger.info("'%s' created." % self.key)
 
-    def set_values(self, client_name):
-        """ set the api key and secret for a specific client_name """
+    def set_values(self, data):
+        """ set the values for a specific message_name """
         logger.info("Starting...")
-        client_name = str(client_name)
-        self._set_api_key(client_name)
+        if not isinstance(data, dict):
+            message = "Not a dictionary: %s" % type(data)
+            logger.warn(message)
+            raise ValueError(message)
+        self._set_values(data)
         logger.info("Finished")
         return True
 
 
 if __name__ == '__main__':
-    client = Client(db_client='abc', user_id='user::abc@abc.com', a=1)
-    client.set_values('default')
-    print client.values
+    message = Message(db_client='abc', user_id='user::abc@abc.com', 
+        client_id='client::b68edfa5-fe9e-47b5-9b56-355fb12d5bac')
+    message.set_values({
+        "name":"odometer",
+        "value":43572.738281,
+        "timestamp":1362060000.036000})
+    print message.values
