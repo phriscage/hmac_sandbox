@@ -10,7 +10,7 @@ import uuid
 import time
 import logging
 
-REQUIRED_ARGS = ['db_client', 'user_id', 'client_id']
+REQUIRED_ARGS = ['db_client', 'user_id', 'client_id', 'data']
 
 logger = logging.getLogger(__name__)
 
@@ -34,37 +34,32 @@ class Event(object):
                 message = "'%s' is missing." % req_arg
                 logger.warn(message)
                 raise ValueError(message)
+            if not isinstance(kwargs['data'], dict):
+                message = "Not a dictionary: %s" % type(data)
+                logger.warn(message)
+                raise ValueError(message)
+            if len(kwargs['data']) > 5:
+                message = "Maximum values is: %s" % len(data['data'])
+                logger.warn(message)
+                raise ValueError(message)
             if req_arg in ['db_client']:
                 setattr(self, req_arg, kwargs.get(req_arg))
             else:
                 self.values[req_arg] = kwargs.get(req_arg)
 
-    def _set_values(self, data):
+    def _set_values(self):
         """ set the values """
         self.values['created_at'] = self.current_time
-        self.values.update(data)
 
     def set_key(self, attr, value):
         """ set the key value """
         self.key = '%s::%s' % (attr, value)
         logger.info("'%s' created." % self.key)
 
-    def set_values(self, data):
+    def set_values(self):
         """ set the values for a specific event_name """
         logger.info("Starting...")
-        if not isinstance(data, dict):
-            message = "Not a dictionary: %s" % type(data)
-            logger.warn(message)
-            raise ValueError(message)
-        if data.get('data') is None:
-            message = "data attribute must exist: %s" % data
-            logger.warn(message)
-            raise ValueError(message)
-        if len(data['data']) > 5:
-            message = "Maximum values is: %s" % len(data['data'])
-            logger.warn(message)
-            raise ValueError(message)
-        self._set_values(data)
+        self._set_values()
         logger.info("Finished")
         return True
 
@@ -78,10 +73,12 @@ class Event(object):
         return data
 
 if __name__ == '__main__':
-    event = Event(db_client='abc', user_id='user::abc@abc.com', 
-        client_id='client::b68edfa5-fe9e-47b5-9b56-355fb12d5bac')
-    event.set_values({
+    import json
+    data = {
         "name":"odometer",
         "value":43572.738281,
-        "timestamp":1362060000.036000})
-    print event.values
+        "timestamp":1362060000.036000
+    }
+    event = Event(db_client='abc', user_id='user::abc@abc.com', 
+        client_id='client::b68edfa5-fe9e-47b5-9b56-355fb12d5bac', data=data)
+    print json.dumps(event.values, indent=4)

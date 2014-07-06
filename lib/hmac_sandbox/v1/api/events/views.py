@@ -59,7 +59,7 @@ def create():
         message = str(error)
         logger.warn(message)
         return jsonify(error=400, message=message, success=False), 400
-    event.set_values(request.json)
+    event.set_values()
     try:
         data = event.add()
     except KeyExistsError as error:
