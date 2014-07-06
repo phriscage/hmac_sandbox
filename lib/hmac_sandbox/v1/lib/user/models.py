@@ -2,11 +2,16 @@
     user.models.py
 """
 from __future__ import absolute_import
-import uuid
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + 
+    '/../../../../../lib')
 import time
 import re
 import logging
 from werkzeug import generate_password_hash, check_password_hash
+
+from hmac_sandbox.v1.lib.client.models import Client
 
 EMAIL_REGEX = re.compile(r'[^@]+@[^@]+\.[^@]+')
 
@@ -22,7 +27,7 @@ class User(object):
         self.key = None
         self.values = {}
         self.key_name = 'email_address'
-        self.valid_args = [self.key_name]
+        self.required_args = [self.key_name, 'db_client']
         self._validate_args()
         self.set_key(self.meta, self.kwargs[self.key_name])
         self.current_time = time.time()
@@ -30,48 +35,54 @@ class User(object):
     def _validate_args(self):
         """ validate the model args """
         logger.debug("Validating args...")
-        if self.key_name not in self.kwargs:
-            message = "'%s' is missing." % self.key_name
+        for req_arg in self.required_args:
+            if self.kwargs.get(req_arg) is None:
+                message = "'%s' is missing." % req_arg
+                logger.warn(message)
+                raise ValueError(message)
+            #self.values[req_arg] = self.kwargs[req_arg]
+        if not EMAIL_REGEX.match(self.kwargs[self.key_name]):
+            message = ("'%s' is not valid '%s'." 
+                % (self.kwargs[self.key_name], self.key_name))
             raise ValueError(message)
-        elif not EMAIL_REGEX.match(self.kwargs[self.key_name]):
-            message = "'%s' is not valid." % self.kwargs[self.key_name]
-            raise ValueError(message)
-        if self.kwargs.get('password'):
-            self.set_password(self.kwargs['password'])
-        for valid_arg in [self.key_name]:
-            if self.kwargs.get(valid_arg):
-                self.values[valid_arg] = self.kwargs[valid_arg]
         
     def set_values(self, values=None):
         """ set the model attributes and default values """
         logger.debug("Setting attributes...")
         if not values:
+            if self.kwargs.get('password'):
+                self.set_password(self.kwargs['password'])
             self.set_group('user')
             self.set_client_api_key('default')
             self.values['created_at'] = self.current_time
+            self.values['email_address'] = self.kwargs[self.key_name]
         else:
             self.values = values
         
     def _set_client_api_key(self, client_name, idx=None):
         """ set the client api key and secret """
-        if not idx:
+        if idx is None:
             idx = 0
-        client = {
+        client = Client(db_client=self.kwargs['db_client'], user_id=self.key)
+        client.set_api_key('default')
+        if len(self.values['clients']) > 0:
+            self.values['clients'].pop(idx)
+        self.values['clients'].insert(idx, {
+            'client_id': client.key, 
             'name': client_name,
-            'api_key': str(uuid.uuid4()),
-            'api_secret': str(uuid.uuid4()),
-            'created_at': self.current_time
-        }
-        self.values['clients'].insert(idx, client)
+            'created_at': client.values['created_at']
+        })
 
     def _set_group(self, group_name, idx=None):
         """ set the group """
-        if not idx:
+        if idx is None:
             idx = 0
         group = {
             'name': group_name,
             'is_active': True
         }
+        if len(self.values['groups']) > 0:
+            self.values['groups'].pop(idx)
         self.values['groups'].insert(idx, group)
 
     def set_key(self, attr, value):
@@ -92,21 +103,18 @@ class User(object):
     def set_client_api_key(self, client_name, override=False):
         """ set the api key and secret for a specific client_name """
         logger.info("Starting...")
-        if override:
-            self._set_client_api_key(client_name)
-        if not self.values.get('clients'):
+        #if override:
+            #self._set_client_api_key(client_name)
+        if self.values.get('clients') is None:
             self.values['clients'] = []
             idx = 0
         else:
             idx, client = next(((idx, client) 
                 for idx, client in enumerate(self.values['clients'])
                 if client_name == client['name']), (None, None))
-            if client:
-                for key in ['api_key', 'api_secret']:
-                    if not client.get(key):
-                        logger.warn("'%s' already exists for key: '%s'." % (key,
-                            self.key))
-                    return False
+            if not idx is None and not override:
+                logger.debug("No existing client and override is False")
+                return False
         self._set_client_api_key(client_name, idx)
         logger.info("Finished")
         return True
@@ -129,7 +137,10 @@ class User(object):
 
 
 if __name__ == '__main__':
-    user = User(email_address='abc', a=1, password='123')
-    print user.values
+    import json
+    user = User(email_address='abc@abc.com', db_client='abc', a=1, password='123')
+    user.set_values()
+    print json.dumps(user.values, indent=4)
+    #user.set_client_api_key('default', True)
     print user.check_password('123')
     print user.check_password('1234')

@@ -50,7 +50,7 @@ def create():
         logger.warn(message)
         return jsonify(message=message, success=False), 400
     try:
-        user = User(**request.json)
+        user = User(db_client=db_client, **request.json)
     except ValueError as error:
         message = str(error)
         logger.warn(message)
@@ -94,7 +94,7 @@ def get(email_address):
     :statuscode 200: success
     :statuscode 400: bad data
     """
-    user = User(email_address=email_address)
+    user = User(db_client=db_client, email_address=email_address)
     data = db_client.get(user.key, quiet=True)
     if not data.success:
         message = "'%s' does not exist." % email_address
