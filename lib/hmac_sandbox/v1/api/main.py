@@ -49,6 +49,7 @@ def create_app():
         #db_session.remove()
 
     @app.errorhandler(400)
+    @app.errorhandler(401)
     @app.errorhandler(404)
     @app.errorhandler(405)
     @app.errorhandler(500)
