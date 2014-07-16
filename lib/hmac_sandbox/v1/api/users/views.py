@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) +
 from hmac_sandbox.v1.api.main import db_client
 from hmac_sandbox.v1.lib.user.models import User
 #from hmac_sandbox.v1.api.util import crossdomain
-from hmac_sandbox.v1.api.auth import requires_api_key
+from hmac_sandbox.v1.api.auth import requires_api_key, requires_hmac
 from couchbase.exceptions import KeyExistsError
 ## need to import all child models for now
 from flask import Blueprint, jsonify, request, abort, make_response
@@ -75,6 +75,7 @@ def create():
 @users.route('/<email_address>', methods=['GET', 'OPTIONS'])
 #@crossdomain(origin="*", methods=['GET'], headers='Content-Type')
 @requires_api_key
+#@requires_hmac
 def get(email_address):
     """get a user
 
