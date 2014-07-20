@@ -33,11 +33,12 @@ def requires_api_key(func):
             if api_key is None or not api_key:
                 message = "Api-Key is required"
                 logger.warn(message)
-                abort(400)
+                abort(400, message)
             client = verify_client(api_key)
             if not client:
                 logger.warn("client DNE: '%s'" % api_key)
                 abort(401)
+            kwargs['client'] = client
         return func(*args, **kwargs)
     return api_key_wrapper
 
@@ -61,15 +62,16 @@ def requires_hmac(func):
             if hmac_hash is None or not hmac_hash:
                 message = "HMAC-Hash is required"
                 logger.warn(message)
-                abort(400)
+                abort(400, message)
             if api_key is None or not api_key:
                 message = "Api-Key is required"
                 logger.warn(message)
-                abort(400)
+                abort(400, message)
             client = verify_client(api_key)
             if not client:
                 logger.warn("client DNE: '%s'" % api_key)
                 abort(401)
+            kwargs['client'] = client
             if not verify_token(client.value.get('api_secret'), data, data):
                 logger.warn("client unauthorized: '%s'" % client.value)
                 abort(401)

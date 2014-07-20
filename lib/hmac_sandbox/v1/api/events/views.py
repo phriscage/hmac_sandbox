@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) +
 from hmac_sandbox.v1.api.main import db_client
 from hmac_sandbox.v1.lib.event.models import Event
 #from hmac_sandbox.v1.api.util import crossdomain
+from hmac_sandbox.v1.api.auth import requires_api_key, requires_hmac
 from couchbase.exceptions import KeyExistsError
 ## need to import all child models for now
 from flask import Blueprint, jsonify, request, abort, make_response
@@ -23,8 +24,8 @@ events = Blueprint('events', __name__)
 #create routes
 @events.route('/new', methods=['POST', 'OPTIONS'])
 #@crossdomain(origin="*", methods=['GET'], headers='Content-Type')
-#@requires_api_key
-def create():
+@requires_api_key
+def create(client=None):
     """create a event
 
     **Example request:**
@@ -52,9 +53,11 @@ def create():
     if not request.json:
         message = "must be application json"
         logger.warn(message)
-        return jsonify(message=message, success=False), 400
+        return jsonify(error=400, message=message, success=False), 200
+    data = request.json
     try:
-        event = Event(db_client=db_client, **request.json)
+        event = Event(db_client=db_client, client_id=client.key,
+            user_id=client.value['user_id'], **data)
     except ValueError as error:
         message = str(error)
         logger.warn(message)

@@ -52,11 +52,12 @@ def create_app():
     @app.errorhandler(401)
     @app.errorhandler(404)
     @app.errorhandler(405)
+    @app.errorhandler(409)
     @app.errorhandler(500)
     def default_error_handle(error=None):
         """ handle all errors with json output """
-        return jsonify(error=error.code, message=str(error), success=False),\
-            error.code
+        return jsonify(error=str(error), message=error.description,
+            success=False), error.code
 
     ## add each api Blueprint and create the base route
     from hmac_sandbox.v1.api.users.views import users

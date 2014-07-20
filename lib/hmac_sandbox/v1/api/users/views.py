@@ -47,26 +47,26 @@ def create():
     :statuscode 400: bad data
     """
     if not request.json:
-        message = "must be application json"
+        message = "must be application/json"
         logger.warn(message)
-        return jsonify(message=message, success=False), 400
+        return abort(400, message)
     try:
         user = User(db_client=db_client, **request.json)
     except ValueError as error:
         message = str(error)
         logger.warn(message)
-        return jsonify(error=400, message=message, success=False), 400
+        return abort(400, message)
     user.set_values()
     try:
         data = user.add()
     except KeyExistsError as error:
         message = "'%s' already exists." % user.key
         logger.warn(message)
-        return jsonify(error=409, message=message, success=False), 409
+        return abort(409)
     if not data.success:
         message = "Something broke... We are looking into it!"
         logger.critical(message)
-        return jsonify(error=500, message=message, success=False), 500
+        return abort(500, message)
     message = "'%s' added successfully!" % user.key
     logger.debug(message)
     return jsonify(message=message, success=True), 200
@@ -76,7 +76,7 @@ def create():
 #@crossdomain(origin="*", methods=['GET'], headers='Content-Type')
 @requires_api_key
 #@requires_hmac
-def get(email_address):
+def get(email_address, client=None):
     """get a user
 
     **Example request:**
@@ -101,12 +101,12 @@ def get(email_address):
     except ValueError as error:
         message = str(error)
         logger.warn(message)
-        return jsonify(error=400, message=message, success=False), 400
+        return abort(400, message)
     data = db_client.get(user.key, quiet=True)
     if not data.success:
         message = "'%s' does not exist." % email_address
         logger.warn(message)
-        return jsonify(error=404, message=message, success=False), 404
+        abort(404, message)
     message = "'%s' successfully found!" % email_address
     logger.debug(message)
     ## don't display the client and group data yet
