@@ -60,6 +60,8 @@ def create_app():
             success=False), error.code
 
     ## add each api Blueprint and create the base route
+    from hmac_sandbox.v1.api.auth.views import auth
+    app.register_blueprint(auth, url_prefix="/v1/auth")
     from hmac_sandbox.v1.api.users.views import users
     app.register_blueprint(users, url_prefix="/v1/users")
     from hmac_sandbox.v1.api.events.views import events

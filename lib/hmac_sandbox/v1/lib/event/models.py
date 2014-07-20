@@ -54,7 +54,7 @@ class Event(object):
     def set_key(self, attr, value):
         """ set the key value """
         self.key = '%s::%s' % (attr, value)
-        logger.info("'%s' created." % self.key)
+        logger.debug("'%s' key created." % self.key)
 
     def set_values(self):
         """ set the values for a specific event_name """
