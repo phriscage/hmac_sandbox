@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <div class="jumbotron">
+    <h3>Whitebox API</h3>
+    <p>This prgramatic interface provides a mechanism to retrive an application's client token and the ability to submit vehicle event data.</p>
+    <p>
+      <button id="login-button" class="btn btn-lg btn-primary">Login</button>
+    </p>
+  </div>
+</div>
+{% endblock %}
+{% block js_footer %}
+{{ super() }}
+<script>
+    $('#login-button').on('click', function(e){
+        e.preventDefault();
+        location.href = "{{ url_for('login.get_index') }}";
+    });
+</script>
+{% endblock %}
