@@ -5,10 +5,10 @@
     <div class="col-md-4 col-md-offset-4">
         <div class="well">
             <label for="email_address">Email Address</label>
-            <input type="email" class="form-control" id="email_address" placeholder="abc@123.com" required>
+            <input type="email" class="form-control" id="email_address" value="{{ email_address if email_address != None }}" placeholder="abc@123.com" required>
             </br>
             <label for="password">Password</label>
-            <input type="password" pattern=".{8,64}" required title="8 to 64 characters" class="form-control" id="password" placeholder="xyz" required>
+            <input type="password" pattern=".{8,64}" required title="8 to 64 characters" class="form-control" id="password" value="{{ password if password != None }}" placeholder="xyz" required>
         </div>
         <div class="well">
             <button type="login-button" class="btn btn-primary btn-block">Login</button>
@@ -19,6 +19,9 @@
 {% endblock %}
 {% block js_footer %}
 {{ super() }}
+<script type="text/javascript">
+    var api_url = '{{ g.api_url }}';
+</script>
 <script>
     $('#login-form').on('submit', function(e){
         e.preventDefault();
@@ -27,7 +30,7 @@
             'password': $('#password').val()
         };
         console.log(data);
-        var url = 'http://10.211.55.11:8000/v1/auth/login';
+        var url = api_url + '/v1/auth/login';
         $.ajax({
           type: 'POST',
           crossDomain: true,

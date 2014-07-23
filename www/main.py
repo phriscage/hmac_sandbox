@@ -1,37 +1,66 @@
 #!/usr/bin/env python
 """
-API bootstrap file
+API user interface bootstrap file
 """
-from flask import Flask, render_template
 import sys
 import os
 import argparse
 import logging
+from flask import Flask, render_template, g, redirect, url_for
+from flask.ext.login import LoginManager, current_user
 
 sys.path.insert(0, os.path.dirname(
     os.path.realpath(__file__)) + '/../lib')
 sys.path.insert(0, os.path.dirname(
     os.path.realpath(__file__)) + '/../conf')
 
+from hmac_sandbox.v1.api.main import db_client
+from hmac_sandbox.v1.lib.user.models import User
+
+## put these in a config
+API_URL = 'http://10.211.55.11:8000'
+APP_SECRET_KEY = ('\xda\xe0\xff\xc8`\x99\x93e\xd0\xb9\x0e\xc9\xde\x84?q'
+    '\x9e\x19\xc0\xa1\xa7\xfb\xd0\xde')
+
 logger = logging.getLogger(__name__)
+
+login_manager = LoginManager()
+
+@login_manager.user_loader
+def load_user(email_address):
+    try:
+        user = User(db_client=db_client, email_address=email_address)
+    except ValueError as error:
+        message = str(error)
+        logger.warn(message)
+        return None
+    data = db_client.get(user.key, quiet=True)
+    if not data.success:
+        message = "'%s' does not exist." % email_address
+        logger.warn(message)
+        return None
+    return data.value
 
 def create_app():
     """ dynamically create the app """
     app = Flask(__name__, static_url_path='/static', static_folder='./static')
     app.config.from_object(__name__)
+    app.secret_key = APP_SECRET_KEY
+    login_manager.init_app(app)
+
+    @app.before_request
+    def before_request():
+        g.user = current_user
+        g.api_url = API_URL
 
     #@app.teardown_appcontext
     #def shutdown_session(exception=None):
         #db_session.remove()
 
-    @app.errorhandler(400)
     @app.errorhandler(401)
-    @app.errorhandler(404)
-    @app.errorhandler(405)
-    @app.errorhandler(500)
-    def default_error_handle(error=None):
-        """ handle all errors with correct html output """
-        return render_template('%s.html' % error.code), error.code
+    def unauthorized_error_handle(error=None):
+        """ handle all unauthorized_errors with redirect to login """
+        return redirect(url_for('login.get_index'))
 
     ## add each api Blueprint and create the base route
     from core.views import core
