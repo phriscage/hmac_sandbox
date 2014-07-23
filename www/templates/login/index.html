@@ -17,3 +17,39 @@
     </form>
 </div>
 {% endblock %}
+{% block js_footer %}
+{{ super() }}
+<script>
+    $('#login-form').on('submit', function(e){
+        e.preventDefault();
+        var data = {
+            'email_address': $('#email_address').val(),
+            'password': $('#password').val()
+        };
+        console.log(data);
+        var url = 'http://10.211.55.11:8000/v1/auth/login';
+        $.ajax({
+          type: 'POST',
+          crossDomain: true,
+          url: url,
+          data: JSON.stringify(data),
+          contentType: 'application/json',
+          success: function (response, status, xhr) {
+            console.log("Success!!");
+            console.log(this.url);
+            console.log(response.data);
+            console.log(xhr.status);
+          },
+          error: function (xhr, desc, err) {
+            console.log(xhr.status);
+            //console.log(err);
+            //console.log(xhr.responseText);
+            //alert(xhr.responseText);
+          },
+          complete: function () {
+            console.log('complete');
+          }
+        });
+    });
+</script>
+{% endblock %}

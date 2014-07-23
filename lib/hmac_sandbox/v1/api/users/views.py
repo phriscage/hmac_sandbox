@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) +
         '/../../../../../lib')
 from hmac_sandbox.v1.api.main import db_client
 from hmac_sandbox.v1.lib.user.models import User
-#from hmac_sandbox.v1.api.util import crossdomain
+from hmac_sandbox.v1.api.util import crossdomain
 from hmac_sandbox.v1.api.lib.auth import requires_api_key, requires_hmac
 from couchbase.exceptions import KeyExistsError
 ## need to import all child models for now
@@ -23,7 +23,7 @@ users = Blueprint('users', __name__)
 
 #create routes
 @users.route('/new', methods=['POST', 'OPTIONS'])
-#@crossdomain(origin="*", methods=['GET'], headers='Content-Type')
+@crossdomain(origin="*", methods=['GET'], headers='Content-Type')
 #@requires_api_key
 def create():
     """create a user
