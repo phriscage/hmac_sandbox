@@ -39,7 +39,8 @@ def load_user(email_address):
         message = "'%s' does not exist." % email_address
         logger.warn(message)
         return None
-    return data.value
+    user.set_values(values=data.value)
+    return user
 
 def create_app():
     """ dynamically create the app """
@@ -60,13 +61,13 @@ def create_app():
     @app.errorhandler(401)
     def unauthorized_error_handle(error=None):
         """ handle all unauthorized_errors with redirect to login """
-        return redirect(url_for('login.get_index'))
+        return redirect(url_for('auth.login'))
 
     ## add each api Blueprint and create the base route
     from core.views import core
-    app.register_blueprint(core, url_prefix="/")
-    from login.views import login
-    app.register_blueprint(login, url_prefix="/login")
+    app.register_blueprint(core, url_prefix="")
+    from auth.views import auth
+    app.register_blueprint(auth, url_prefix="/auth")
     #from lvd.v1.api.account_numbers.views import account_numbers
     #app.register_blueprint(account_numbers, url_prefix="/account_numbers")
 

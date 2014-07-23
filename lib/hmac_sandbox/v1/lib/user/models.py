@@ -103,6 +103,24 @@ class User(object):
             return None
         return check_password_hash(self.values['password'], password)
 
+    def is_authenticated(self):
+        """ should just return True unless the object represents a user
+            that should not be allowed to authenticate for some reason.
+        """
+        return True
+
+    def is_active(self):
+        """ method should return True for users unless they are inactive, for
+            example because they have been banned.
+        """
+        return True
+
+    def is_anonymous(self):
+        """ method should return True only for fake users that are not supposed
+            to log in to the system.
+        """
+        return False
+
     def set_client_api_key(self, client_name, override=False):
         """ set the api key and secret for a specific client_name """
         logger.info("Starting...")
@@ -137,6 +155,10 @@ class User(object):
         self._set_group(group_name)
         logger.info("Finished")
         return True
+
+    def get_id(self):
+        """ return the self.key """
+        return self.values['email_address']
 
     def add(self):
         """ add the couchbase document and/or children """

@@ -48,10 +48,10 @@
             <li id="contact"><a href="#footer">Contact</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
-            {% if not session.logged_in %}
-              <li><a href="{{ url_for('login.get_index') }}">Login</a></li>
+            {% if g.user and g.user.is_authenticated() %}
+              <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
             {% else %}
-              <li><a href="#">Logout</a></li>
+              <li><a href="{{ url_for('auth.login') }}">Login</a></li>
             {% endif %}
           </ul>
         </div><!--/.nav-collapse -->

@@ -15,7 +15,7 @@
 <script>
     $('#login-button').on('click', function(e){
         e.preventDefault();
-        location.href = "{{ url_for('login.get_index') }}";
+        location.href = "{{ url_for('auth.login') }}";
     });
 </script>
 {% endblock %}

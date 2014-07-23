@@ -30,7 +30,7 @@
             'password': $('#password').val()
         };
         console.log(data);
-        var url = api_url + '/v1/auth/login';
+        var url = '/auth/login';
         $.ajax({
           type: 'POST',
           crossDomain: true,
@@ -42,12 +42,20 @@
             console.log(this.url);
             console.log(response.data);
             console.log(xhr.status);
+            if (xhr.status === 200 && response.url) {
+                // response.redirect contains the string URL to redirect to
+                window.location.href = response.url;
+            } else {
+                // response.form contains the HTML for the replacement form
+                console.log(response.message)
+                $("#email_address").replaceWith(response.message);
+            }
           },
           error: function (xhr, desc, err) {
             console.log(xhr.status);
             //console.log(err);
             //console.log(xhr.responseText);
-            //alert(xhr.responseText);
+            alert(xhr.responseText);
           },
           complete: function () {
             console.log('complete');
