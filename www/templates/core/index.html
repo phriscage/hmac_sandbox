@@ -1,21 +1,43 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+.form .form-control { margin-bottom: 10px; }
+</style>
 <div class="container">
   <div class="jumbotron">
-    <h3>Whitebox API</h3>
-    <p>This prgramatic interface provides a mechanism to retrive an application's client token and the ability to submit vehicle event data.</p>
-    <p>
-      <button id="login-button" class="btn btn-lg btn-primary">Login</button>
-    </p>
+    <div class="row">
+        <div class="col-md-6">
+            <h3>Whitebox API</h3>
+            <p>This prgramatic interface provides a mechanism to retrive an application's client token and the ability to submit vehicle event data.</p>
+        </div>
+        <div class="col-md-6">
+            <form class="form" id="signup-form" role="form">
+                <legend><h3>Sign Up</h3></legend>
+                <div class="row">
+                    <div class="col-xs-6 col-md-6">
+                        <input type="text" id="first_name" value="{{ first_name if first_name != None }}" class="form-control input-lg" placeholder="First Name" required />                        
+                    </div>
+                    <div class="col-xs-6 col-md-6">
+                        <input type="text" id="last_name" value="{{ last_name if last_name != None }}" class="form-control input-lg" placeholder="Last Name" required />                        
+                    </div>
+                </div>
+                <input type="email" id="email_address" value="{{ email_address if email_address != None }}" class="form-control input-lg" placeholder="Email Address" required />
+                <input type="email" id="confirm_email_address" value="{{ email_address if email_address != None }}" class="form-control input-lg" placeholder="Confirm Email Address" required />
+                <input type="password" id="password" value="{{ password if password != None }}" class="form-control input-lg" pattern=".{8,64}" title="8 to 64 characters" placeholder="Password" required />
+                <span class="help-block">By clicking Create my account, you agree to our Terms and that you have read our Data Use Policy, including our Cookie Use.</span>
+                <button type="signup-button" class="btn btn-lg btn-primary btn-block">Sign up</button>
+            </form>
+        </div>
+      </div>
   </div>
 </div>
 {% endblock %}
 {% block js_footer %}
 {{ super() }}
 <script>
-    $('#login-button').on('click', function(e){
+    $('#signup-button').on('click', function(e){
         e.preventDefault();
-        location.href = "{{ url_for('auth.login') }}";
+        location.href = "{{ url_for('core.get_index') }}";
     });
 </script>
 {% endblock %}
