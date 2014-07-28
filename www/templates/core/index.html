@@ -75,7 +75,23 @@
           },
           error: function (xhr, desc, err) {
             console.log(xhr);
-            alert(xhr.responseJSON.message);
+            var message;
+            console.log(xhr.responseJSON);
+            if (typeof xhr.responseJSON == 'undefined') {
+                message = "Something broke. Please try again.";
+            } else if (typeof xhr.responseJSON.message == 'undefined') {
+                message = "Something failed. Please email our support.";
+            } else {
+                message = xhr.responseJSON.message;
+            }
+            $('#signup-form').before(
+              '<div class="alert alert-danger fade in">'+
+                  '<button type="button" class="close" ' +
+                          'data-dismiss="alert" aria-hidden="true">' +
+                      '&times;' +
+                  '</button>' +
+                  message +
+            '</div>');
           },
           complete: function () {
             console.log('complete');
