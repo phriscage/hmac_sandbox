@@ -54,17 +54,17 @@ class Event(object):
     def set_key(self, attr, value):
         """ set the key value """
         self.key = '%s::%s' % (attr, value)
-        logger.debug("'%s' key created." % self.key)
+        logger.debug("'%s' key set." % self.key)
 
     def set_values(self):
         """ set the values for a specific event_name """
-        logger.info("Starting...")
+        logger.info("Setting the values...")
         self._set_values()
-        logger.info("Finished")
         return True
 
     def add(self):
         """ add the couchbase document and/or children """
+        logger.info("Adding the document for key: '%s'" % self.key)
         try:
             data = self.db_client.add(self.key, self.values)
         except KeyExistsError as error:

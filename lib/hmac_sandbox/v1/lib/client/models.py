@@ -52,14 +52,12 @@ class Client(object):
     def set_key(self, attr, value):
         """ set the key value """
         self.key = '%s::%s' % (attr, value)
-        logger.debug("'%s' key created." % self.key)
+        logger.debug("'%s' key set." % self.key)
 
     def set_values(self, client_name):
         """ set the api key and secret for a specific client_name """
-        logger.info("Starting...")
-        client_name = str(client_name)
-        self._set_api_key(client_name)
-        logger.info("Finished")
+        logger.info("Setting the client_name: '%s'" % client_name)
+        self._set_api_key(str(client_name))
         return True
 
 

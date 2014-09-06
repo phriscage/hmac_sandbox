@@ -110,7 +110,7 @@ def get(email_address, client=None):
     message = "'%s' successfully found!" % email_address
     logger.debug(message)
     ## don't display the client and group data yet
-    for attr in ['clients', 'groups']:
+    for attr in ['clients', 'groups', 'password']:
         data.value.pop(attr, None)
     return jsonify(message=message, data=data.value, success=True), 200
 

@@ -16,6 +16,7 @@ from hmac_sandbox.v1.lib.client.models import Client
 
 EMAIL_REGEX = re.compile(r'[^@]+@[^@]+\.[^@]+')
 REQUIRED_ARGS = ['db_client', 'email_address']
+VALID_ARGS = ['first_name', 'last_name']
 KEY_NAME = 'email_address'
 
 logger = logging.getLogger(__name__)
@@ -50,38 +51,29 @@ class User(object):
             raise ValueError(message)
         if kwargs.get('password'):
             self.set_password(str(kwargs['password']))
+        for valid_arg in VALID_ARGS:
+            if kwargs.get(valid_arg) is not None:
+                self.values[valid_arg] = kwargs.get(valid_arg)
 
-    def _set_client_api_key(self, client_name, idx=None):
+    def _set_client(self, client_name):
         """ set the client api key and secret """
-        if idx is None:
-            idx = 0
         client = Client(db_client=self.db_client, user_id=self.key)
-        client.set_values('default')
+        client.set_values(client_name)
         self.children[client.key] = client.values ## saved once object is saved
-        if len(self.values['clients']) > 0:
-            self.values['clients'].pop(idx)
-        self.values['clients'].insert(idx, {
+        self.values['clients'][client_name] = {
             'client_id': client.key, 
-            'name': client_name,
             'created_at': client.values['created_at']
-        })
-
-    def _set_group(self, group_name, idx=None):
-        """ set the group """
-        if idx is None:
-            idx = 0
-        group = {
-            'name': group_name,
-            'is_active': True
         }
-        if len(self.values['groups']) > 0:
-            self.values['groups'].pop(idx)
-        self.values['groups'].insert(idx, group)
+
+    def _set_group(self, group_name):
+        """ set the group """
+        if group_name not in self.values['groups']:
+            self.values['groups'].insert(0, group_name)
 
     def set_key(self, attr, value):
         """ set the key value """
         self.key = '%s::%s' % (attr, value)
-        logger.debug("'%s' key created." % self.key)
+        logger.debug("'%s' key set." % self.key)
 
     def set_values(self, values=None):
         """ set the model attributes and default values """
@@ -89,7 +81,7 @@ class User(object):
         if not values:
             self.values['created_at'] = self.current_time
             self.set_group('user')
-            self.set_client_api_key('default')
+            self.set_client('default')
         else:
             self.values = values
         
@@ -121,47 +113,38 @@ class User(object):
         """
         return False
 
-    def set_client_api_key(self, client_name, override=False):
+    def set_client(self, client_name, override=False):
         """ set the api key and secret for a specific client_name """
-        logger.info("Starting...")
+        logger.info("Setting the client_name: '%s'" % client_name)
         #if override:
-            #self._set_client_api_key(client_name)
+            #self._set_client(client_name)
         if self.values.get('clients') is None:
-            self.values['clients'] = []
-            idx = 0
+            self.values['clients'] = {}
         else:
-            idx, client = next(((idx, client) 
-                for idx, client in enumerate(self.values['clients'])
-                if client_name == client['name']), (None, None))
-            if not idx is None and not override:
+            if self.values['clients'].get(client_name) is not None \
+            and not override:
                 logger.debug("No existing client and override is False")
                 return False
-        self._set_client_api_key(client_name, idx)
-        logger.info("Finished")
+        self._set_client(client_name)
         return True
 
     def set_group(self, group_name, admin=False):
         """ set the group for a specific group_name """
-        logger.info("Starting...")
+        logger.info("Setting the group_name: '%s'" % group_name)
         if not self.values.get('groups'):
             self.values['groups'] = []
-            #idx = 0
-        #else:
-            #idx, group = next(((idx, group)
-                #for idx, group in enumerate(self.values['groups'])
-                #if group_name == group['name']), (None, None))
         if admin:
             self._set_group('administrator')
         self._set_group(group_name)
-        logger.info("Finished")
         return True
 
     def get_id(self):
         """ return the self.key """
-        return self.values['email_address']
+        return self.values[KEY_NAME]
 
     def add(self):
         """ add the couchbase document and/or children """
+        logger.info("Adding the document for key: '%s'" % self.key)
         try:
             data = self.db_client.add(self.key, self.values)
             logger.debug("Setting new document(s) for '%s'" % self.children)
@@ -186,6 +169,6 @@ if __name__ == '__main__':
     user = User(**args)
     user.set_values()
     print json.dumps(user.values, indent=4)
-    #user.set_client_api_key('default', True)
+    #user.set_client('default', True)
     print user.check_password('123')
     print user.check_password('1234')
