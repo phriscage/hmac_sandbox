@@ -8,7 +8,7 @@ core = Blueprint('core', __name__, template_folder='templates')
 def get_index():
     """ root path render main """
     if g.user is not None and g.user.is_authenticated():
-        return redirect(url_for('core.get_scores'))
+        return redirect(url_for('core.get_promos'))
     first_name = request.args.get('f')
     last_name = request.args.get('l')
     email_address = request.args.get('e')
@@ -21,8 +21,14 @@ def get_test():
     """ root path render main """
     return render_template('core/test.html')
 
-@core.route('/scores', methods=['GET'])
+@core.route('/promos', methods=['GET'])
 @login_required
-def get_scores():
-    """ scores render top scores """
-    return render_template('core/scores.html')
+def get_promos():
+    """ promos render top promos """
+    return render_template('core/promos.html')
+
+@core.route('/profile', methods=['GET'])
+@login_required
+def get_profile():
+    """ profile render """
+    return render_template('core/profile.html')

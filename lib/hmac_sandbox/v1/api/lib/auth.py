@@ -72,7 +72,7 @@ def requires_hmac(func):
                 logger.warn("client DNE: '%s'" % api_key)
                 abort(401)
             kwargs['client'] = client
-            if not verify_token(client.value.get('api_secret'), data, data):
+            if not verify_token(client.value.get('api_secret'), hmac_hash, data):
                 logger.warn("client unauthorized: '%s'" % client.value)
                 abort(401)
         return func(*args, **kwargs)

@@ -51,11 +51,11 @@ def login(email_address=None, password=None):
         ## don't return hashed password
         data.value.pop('password', None)
         login_user(user)
-        return jsonify(url=url_for('core.get_scores'), success=True), 200
+        return jsonify(url=url_for('core.get_promos'), success=True), 200
         #return redirect(url_for('core.get_index'))
     else:
         if g.user is not None and g.user.is_authenticated():
-            return redirect(url_for('core.get_scores'))
+            return redirect(url_for('core.get_promos'))
         email_address = request.args.get('e')
         password = request.args.get('p')
         return render_template('auth/login.html', email_address=email_address, 
