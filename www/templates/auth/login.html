@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.form .form-control { margin-bottom: 10px; }
+</style>
+<div class="container">
+        <div class="col-md-6 col-md-offset-3">
+        <form class="form" id="login-form" role="form">
+            <div class="well">
+                <input type="email" id="email_address" value="{{ email_address if email_address != None }}" class="form-control input-lg" placeholder="Email Address" required />
+                <input type="password" id="password" value="{{ password if password != None }}" class="form-control input-lg" pattern=".{8,64}" title="8 to 64 characters" placeholder="Password" required />
+                <button type="login-button" class="btn btn-lg btn-primary btn-block">Login</button>
+            </div>
+        </form>
+        </div>
+</div>
+{% endblock %}
+{% block js_footer %}
+{{ super() }}
+<script type="text/javascript">
+    var api_url = '{{ g.api_url }}';
+</script>
+<script>
+    $('#login-form').on('submit', function(e){
+        e.preventDefault();
+        var data = {
+            'email_address': $('#email_address').val(),
+            'password': $('#password').val()
+        };
+        console.log(data);
+        var url = '/auth/login';
+        $.ajax({
+          type: 'POST',
+          crossDomain: true,
+          url: url,
+          data: JSON.stringify(data),
+          contentType: 'application/json',
+          success: function (response, status, xhr) {
+            console.log("Success!!");
+            console.log(this.url);
+            console.log(response.data);
+            console.log(xhr.status);
+            if (xhr.status === 200 && response.url) {
+                // response.redirect contains the string URL to redirect to
+                window.location.href = response.url;
+            } else {
+                // response.form contains the HTML for the replacement form
+                console.log(response.message)
+                $("#email_address").replaceWith(response.message);
+            }
+          },
+          error: function (xhr, desc, err) {
+            console.log(xhr.status);
+            var message;
+            console.log(xhr.responseJSON);
+            if (typeof xhr.responseJSON == 'undefined') {
+                message = "Something broke. Please try again.";
+            } else if (typeof xhr.responseJSON.message == 'undefined') {
+                message = "Something failed. Please email our support.";
+            } else {
+                message = xhr.responseJSON.message;
+            }
+            $('#login-form').before(
+              '<div class="alert alert-danger fade in">'+
+                  '<button type="button" class="close" ' +
+                          'data-dismiss="alert" aria-hidden="true">' +
+                      '&times;' +
+                  '</button>' +
+                  message +
+            '</div>');
+          },
+          complete: function () {
+            console.log('complete');
+          }
+        });
+    });
+</script>
+{% endblock %}
