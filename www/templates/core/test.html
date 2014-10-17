@@ -3,6 +3,24 @@
 <div class="container">
   <div class="jumbotron">
     <h3>TEST</h3>
+    {% raw %}
+    <div ng-app="myApp" ng-controller="TestController">
+      <input type="text" ng-model="data.message">
+      <h1>{{data.message + " world"}}</h1>
+      <div class="{{data.message}}">
+        Wrap me in a foundation component
+      </div>
+        {{understand}}
+        </br>
+        <input type='text' ng-model='searchText' />
+        <ul>
+            <li ng-repeat='person in people | filter:searchText'>#{{person.id}} {{person.name}}</li>
+        </ul>
+        <ul>
+            <li ng-repeat='person in people | filter:searchText'>#{{person.id}} {{person.name}}</li>
+        </ul>
+    </div>
+    {% endraw %}
   </div>
 </div>
 {% endblock %}
