@@ -15,8 +15,8 @@ from couchbase.exceptions import KeyExistsError
 from hmac_sandbox.v1.lib.client.models import Client
 
 EMAIL_REGEX = re.compile(r'[^@]+@[^@]+\.[^@]+')
-REQUIRED_ARGS = ['db_client', 'email_address']
-VALID_ARGS = ['first_name', 'last_name']
+REQUIRED_ARGS = ('db_client', 'email_address')
+VALID_ARGS = ('first_name', 'last_name')
 KEY_NAME = 'email_address'
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ class User(object):
         """ validate the model args """
         logger.debug("Validating args...")
         for req_arg in REQUIRED_ARGS:
-            if kwargs.get(req_arg) is None:
+            if not kwargs.has_key(req_arg):
                 message = "'%s' is missing." % req_arg
                 logger.warn(message)
                 raise ValueError(message)
@@ -46,13 +46,16 @@ class User(object):
                 setattr(self, req_arg, kwargs.get(req_arg))
             else:
                 self.values[req_arg] = kwargs.get(req_arg)
+        ## argument specific requirements
         if not EMAIL_REGEX.match(kwargs[KEY_NAME]):
             message = ("'%s' is not valid '%s'." % (kwargs[KEY_NAME], KEY_NAME))
             raise ValueError(message)
-        if kwargs.get('password'):
+        if kwargs.has_key('password'):
+            # self._validate_password(str(kwargs['password']))
             self.set_password(str(kwargs['password']))
         for valid_arg in VALID_ARGS:
-            if kwargs.get(valid_arg) is not None:
+            if kwargs.has_key(valid_arg):
+                # self._validate_name(str(kwargs.get(valid_arg)))
                 self.values[valid_arg] = kwargs.get(valid_arg)
 
     def _set_client(self, client_name):
@@ -68,7 +71,7 @@ class User(object):
     def _set_group(self, group_name):
         """ set the group """
         if group_name not in self.values['groups']:
-            self.values['groups'].insert(0, group_name)
+            self.values['groups'].append(group_name)
 
     def set_key(self, attr, value):
         """ set the key value """
@@ -131,7 +134,7 @@ class User(object):
     def set_group(self, group_name, admin=False):
         """ set the group for a specific group_name """
         logger.info("Setting the group_name: '%s'" % group_name)
-        if not self.values.get('groups'):
+        if not self.values.has_key('groups'):
             self.values['groups'] = []
         if admin:
             self._set_group('administrator')
