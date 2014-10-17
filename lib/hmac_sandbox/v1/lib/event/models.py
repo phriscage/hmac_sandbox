@@ -10,7 +10,7 @@ import uuid
 import time
 import logging
 
-REQUIRED_ARGS = ['db_client', 'user_id', 'client_id', 'data']
+REQUIRED_ARGS = ('db_client', 'user_id', 'client_id', 'data')
 
 logger = logging.getLogger(__name__)
 
@@ -30,22 +30,23 @@ class Event(object):
         """ validate the model args """
         logger.debug("Validating args...")
         for req_arg in REQUIRED_ARGS:
-            if kwargs.get(req_arg) is None:
-                message = "'%s' is missing." % req_arg
-                logger.warn(message)
-                raise ValueError(message)
-            if not isinstance(kwargs['data'], dict):
-                message = "Not a dictionary: %s" % type(data)
-                logger.warn(message)
-                raise ValueError(message)
-            if len(kwargs['data']) > 5:
-                message = "Maximum values is: %s" % len(data['data'])
+            if not kwargs.has_key(req_arg):
+                message = "'%s' is required." % req_arg
                 logger.warn(message)
                 raise ValueError(message)
             if req_arg in ['db_client']:
                 setattr(self, req_arg, kwargs.get(req_arg))
             else:
                 self.values[req_arg] = kwargs.get(req_arg)
+        ## argument specific requirements
+        if not isinstance(kwargs['data'], dict):
+            message = "Not a dictionary: %s" % type(data)
+            logger.warn(message)
+            raise ValueError(message)
+        if len(kwargs['data']) > 5:
+            message = "Maximum values is: %s" % len(data['data'])
+            logger.warn(message)
+            raise ValueError(message)
 
     def _set_values(self):
         """ set the values """
